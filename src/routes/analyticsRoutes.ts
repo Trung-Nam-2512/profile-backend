@@ -1,26 +1,12 @@
 import { Router } from 'express'
 import { AnalyticsController } from '../controllers/AnalyticsController'
 import { authGuard, requireAdmin } from '../middleware/authGuard'
-import rateLimit from 'express-rate-limit'
 
 const router = Router()
 const analyticsController = new AnalyticsController()
 
-// Rate limiting for analytics endpoints
-const analyticsRateLimit = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 30, // 30 requests per minute
-  message: {
-    success: false,
-    error: {
-      code: 'RATE_LIMIT_EXCEEDED',
-      message: 'Too many analytics requests. Please try again later.',
-    },
-  },
-})
-
-// Admin-only analytics routes
-router.use(authGuard, requireAdmin, analyticsRateLimit)
+// Admin-only analytics routes - Rate limiting removed for simplicity
+router.use(authGuard, requireAdmin)
 
 // Dashboard overview
 router.get('/dashboard', analyticsController.getDashboardStats)

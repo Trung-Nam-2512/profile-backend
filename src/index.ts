@@ -41,6 +41,14 @@ const ALLOWED_ORIGINS = process.env.NODE_ENV === 'production'
 // 1) DB
 connectDatabase()
 
+// 1.5) Trust proxy settings for production (behind Nginx/Cloudflare)
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', true)
+} else {
+  // In development, trust localhost
+  app.set('trust proxy', 'loopback')
+}
+
 // 2) Security (Helmet)
 // - Cho phép nhúng ảnh cross-origin (fix CORP)
 // - Tắt COEP để không chặn resource cross-origin
