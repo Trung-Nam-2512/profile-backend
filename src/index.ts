@@ -23,8 +23,7 @@ dotenv.config()
 const app = express()
 const PORT = Number(process.env.PORT) || 5002
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
-const BACKEND_PUBLIC_ORIGIN =
-  process.env.BACKEND_PUBLIC_ORIGIN || `http://localhost:${PORT}`
+// Removed BACKEND_PUBLIC_ORIGIN - not needed for Cloudflare Tunnel setup
 
 // 1) DB
 connectDatabase()
@@ -41,7 +40,7 @@ app.use(
       useDefaults: true,
       directives: {
         // cho ảnh từ chính nó + data/blob + backend
-        imgSrc: ["'self'", 'data:', 'blob:', BACKEND_PUBLIC_ORIGIN],
+        imgSrc: ["'self'", 'data:', 'blob:', '*'],
       },
     },
   })
@@ -103,7 +102,7 @@ app.use(errorHandler)
 // 9) Start
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
-    console.log(`Server running on ${BACKEND_PUBLIC_ORIGIN}`)
+    console.log(`Server running on http://localhost:${PORT}`)
     console.log(`Frontend allowed: ${FRONTEND_URL}`)
     console.log("Server running in", process.env.PORT )
   })

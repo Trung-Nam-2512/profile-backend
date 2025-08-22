@@ -10,13 +10,13 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
-
+.env.example
 # Build outputs
 dist/
 build/
 .next/
 out/
-
+test.txt
 # IDE
 .vscode/
 .idea/
