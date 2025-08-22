@@ -17,12 +17,25 @@ import { projectRoutes } from './routes/projectRoutes'
 import contactRoutes from './routes/contactRoutes'
 import { userRoutes } from './routes/userRoutes'
 import { uploadRoutes } from './routes/uploadRoutes'
+import { analyticsRoutes } from './routes/analyticsRoutes'
 
 dotenv.config()
 
 const app = express()
 const PORT = Number(process.env.PORT) || 5002
+// Support both development and production URLs
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
+// Allow all localhost ports for development + production domains
+const ALLOWED_ORIGINS = process.env.NODE_ENV === 'production' 
+  ? [
+      'https://nguyentrungnam.com',
+      'https://www.nguyentrungnam.com'
+    ]
+  : [
+      /^http:\/\/localhost:\d+$/,  // All localhost ports for development
+      'https://nguyentrungnam.com',
+      'https://www.nguyentrungnam.com'
+    ]
 // Removed BACKEND_PUBLIC_ORIGIN - not needed for Cloudflare Tunnel setup
 
 // 1) DB
@@ -49,7 +62,26 @@ app.use(
 // 3) CORS (cho API)
 app.use(
   cors({
-    origin: FRONTEND_URL,
+    origin: function (origin, callback) {
+      // Allow requests with no origin (mobile apps, curl, postman)
+      if (!origin) return callback(null, true)
+      
+      // Check if origin matches any allowed origins (string or regex)
+      const isAllowed = ALLOWED_ORIGINS.some(allowedOrigin => {
+        if (typeof allowedOrigin === 'string') {
+          return allowedOrigin === origin
+        } else if (allowedOrigin instanceof RegExp) {
+          return allowedOrigin.test(origin)
+        }
+        return false
+      })
+      
+      if (isAllowed) {
+        return callback(null, true)
+      }
+      
+      callback(new Error('Not allowed by CORS'))
+    },
     credentials: true,
   })
 )
@@ -66,8 +98,8 @@ app.get('/health', (req, res) => {
     environment: process.env.NODE_ENV || 'development',
   })
 })
-app.get('/api', (req, res) => {
-  sendSuccess(res, { message: 'Nam’s Blog API' })
+app.get('/', (req, res) => {
+  sendSuccess(res, { message: "Nam's Blog API" })
 })
 
 // 6) Static uploads (quan trọng cho ảnh)
@@ -87,13 +119,15 @@ app.use(
 )
 
 // 7) API Routes
-app.use('/api/auth', authRoutes)
-app.use('/api/v1/posts', postRoutes)
-app.use('/api/v1/profile', profileRoutes)
-app.use('/api/v1/projects', projectRoutes)
-app.use('/api/v1/contact', contactRoutes)
-app.use('/api/v1/users', userRoutes)
-app.use('/api/v1/upload', uploadRoutes)
+// Nginx strips /api prefix, so backend uses direct paths
+app.use('/auth', authRoutes)
+app.use('/v1/posts', postRoutes)
+app.use('/v1/profile', profileRoutes)
+app.use('/v1/projects', projectRoutes)
+app.use('/v1/contact', contactRoutes)
+app.use('/v1/users', userRoutes)
+app.use('/v1/upload', uploadRoutes)
+app.use('/v1/analytics', analyticsRoutes)
 
 // 8) Errors (đặt cuối)
 app.use(notFoundHandler)
